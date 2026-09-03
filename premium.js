@@ -30,18 +30,33 @@
 
   const form = document.querySelector('#analysis-form');
   const note = document.querySelector('#form-note');
-  // FUTURE CRM INTEGRATION: this sprint intentionally has no endpoint. The local confirmation below
-  // must not be treated as proof that a production lead was delivered.
-  form?.addEventListener('submit', (event) => {
+  form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const zip = form.querySelector('#zip');
     if (!zip.checkValidity()) {
       zip.reportValidity();
       return;
     }
-    note.textContent = `Thank you. We’ll be in touch soon about your water analysis in ${zip.value.trim()}.`;
-    note.style.color = '#84632e';
-    form.reset();
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    note.textContent = 'Sending your water analysis request…';
+    note.style.color = '';
+    try {
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) throw new Error('Form submission failed');
+      note.textContent = `Thank you. We’ll be in touch soon about your water analysis in ${zip.value.trim()}.`;
+      note.style.color = '#84632e';
+      form.reset();
+    } catch (error) {
+      note.textContent = 'We could not send your request. Please try again or call us directly.';
+      note.style.color = '#9b3d2f';
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
   const year = document.querySelector('#year');
